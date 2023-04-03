@@ -40,6 +40,8 @@ rm -f /var/lib/rpm/__db*
 rpm --rebuilddb
 rm -f /.bootstrap
 
+ssu re @RELEASE@
+
 %end
 
 %post --nochroot

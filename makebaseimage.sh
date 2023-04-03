@@ -14,8 +14,4 @@ docker run --rm --privileged --network=host -v $(pwd):/share -w /share coderus/s
 
 # older docker import ignores platform
 # added in https://github.com/moby/moby/pull/43103
-echo -e 'FROM scratch\nADD baseimage.tar /\nCMD ["/usr/bin/bash"]' | \
-    docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f- .
-
-# older docker import ignores platform
-# docker import --platform linux/$DOCKER_PLATFORM_ARCH baseimage.tar sailfishos-$SFOS_ARCH-$RELEASE
+docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f Dockerfile .
