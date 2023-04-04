@@ -15,13 +15,26 @@ attr
 basesystem
 gnu-bash
 gnu-coreutils
+gnu-cpio
+gnu-diffutils
+gnu-findutils
+gnu-grep
+gnu-gzip
+gnu-sed
+gnu-tar
+gnu-which
 deltarpm
 file
 kbd
+meego-rpm-config
 net-tools
 passwd
 pigz
+procps-ng
+psmisc-tools
 rootfiles
+rpm-build
+rpmlint
 ssu
 ssu-vendor-data-jolla
 systemd-config-mer
@@ -39,8 +52,6 @@ echo "arch = @ARCH@" >> /etc/zypp/zypp.conf
 rm -f /var/lib/rpm/__db*
 rpm --rebuilddb
 rm -f /.bootstrap
-
-ssu re @RELEASE@
 
 %end
 
