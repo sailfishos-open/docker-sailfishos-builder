@@ -53,6 +53,9 @@ rm -f /var/lib/rpm/__db*
 rpm --rebuilddb
 rm -f /.bootstrap
 
+# cleanup
+rm -f /var/log/lastlog
+
 %end
 
 %post --nochroot
