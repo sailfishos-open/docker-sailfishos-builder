@@ -1,0 +1,4 @@
+#!/bin/bash
+
+SPEC=$1
+rpmspec --buildrequires -q $SPEC | xargs zypper in -y

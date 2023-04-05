@@ -32,13 +32,12 @@ passwd
 pigz
 procps-ng
 psmisc-tools
+python3-pip
 rootfiles
 rpm-build
 rpmlint
 ssu
 ssu-vendor-data-jolla
-systemd-config-mer
-xdg-user-dirs
 zypper
 %end
 

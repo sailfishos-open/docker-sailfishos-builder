@@ -46,8 +46,5 @@ docker run --rm --privileged --network=host -v $(pwd):/share -w /share coderus/s
        mic create fs -v -d --arch=$SFOS_ARCH --outdir=/share --tokenmap=ARCH:${SFOS_ARCH},RELEASE:$RELEASE \
        --pack-to=baseimage.tar base_${SFOS_ARCH}_${RELEASE}.ks
 
-# older docker import ignores platform
-# added in https://github.com/moby/moby/pull/43103
-
 cat Dockerfile | sed -e "s/@RELEASE@/$RELEASE/g" | \
     docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f- .

@@ -1,0 +1,3 @@
+[submodule "rpmdevtools"]
+	path = rpmdevtools
+	url = https://pagure.io/rpmdevtools.git

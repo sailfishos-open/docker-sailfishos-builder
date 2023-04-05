@@ -1,0 +1,102 @@
+#!/bin/bash
+
+set -ex
+
+usage="$(basename "$0") [-h] [-s SPEC] [-r REPO]
+
+where:
+ -h       show this help text
+
+ -s SPEC  builds using given SPEC. Here, SPEC basename is only
+          expected and should be allocated under rpm/ subfolder
+          of the sources. By default, the first SPEC in rpm/
+          subfolder is used
+
+ -r REPO  additional repository that is needed to fetch packages
+          required for building SPEC
+"
+
+
+# Builds RPMs from sources found in /source
+SRCDIR=source
+BDIR=/builder
+
+# use / as a base
+cd /
+
+RPMSRCDIR=$BDIR/rpmbuild/SOURCES
+RPMSPECDIR=$BDIR/rpmbuild/SPECS
+RPMDIR=$BDIR/rpmbuild/RPMS
+
+specs=( $SRCDIR/rpm/*.spec )
+SPEC="${specs[0]}"
+
+# handle options
+while getopts 'sr:h' opt; do
+  case "$opt" in
+      s)
+	  SPEC=$SRCDIR/rpm/$OPTARG
+	  ;;
+      
+      r)
+	  arg="$OPTARG"
+	  echo "Adding repository $arg"
+	  ssu ar repo-$OPTIND $arg
+	  echo
+	  ;;
+  
+      ?|h)
+	  echo "$usage"
+	  exit 0
+	  ;;
+  esac
+done
+shift "$(($OPTIND -1))"
+
+# check if we have spec to build
+if [ ! -f $SPEC ]; then
+    echo "Cannot find any SPEC files in $SRCDIR/rpm"
+    echo
+    echo "$usage"
+    exit -1
+fi
+
+SPECBNAME=`basename $SPEC`
+echo Building $SPECBNAME
+
+# install dependencies
+rpm-install-build-deps $SPEC
+
+# determine source name
+SOURCE=$(rpmdev-spectool --source 0 $SPEC | cut -f2 -d" ")
+echo Packing sources into $SOURCE
+
+# prepare RPM builder directories
+chown -R builder $BDIR
+su builder rpmdev-setuptree
+
+SRCBASE=`rpmspec -q --srpm --qf "%{name}-%{version}\n" $SPEC`
+TAROPTS="--exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
+
+# pack main sources
+if [[ $SOURCE = *.tar.gz ]]; then
+    tar zcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
+elif [[ $SOURCE = *.tar.bz2 ]]; then
+    tar jcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
+elif [[ $SOURCE = *.tzr.xz ]]; then
+    tar Jcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
+else
+    echo "Unknown file extension for sources: $SOURCE"
+    exit 2
+fi
+
+# copy all other sources and SPEC from rpm subfolder
+cp $SRCDIR/rpm/* $RPMSRCDIR/
+cp $SPEC $RPMSPECDIR
+
+# start the build
+su builder -c "rpmbuild -ba $RPMSPECDIR/$SPECBNAME"
+
+# rpmlint
+su builder -c "rpmlint $RPMDIR/*"
+
