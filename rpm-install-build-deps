@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# ssu ar chum https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.5.0.19_i486/
+# ssu ar chum https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.5.0.19_aarch64/
+
+SPEC=$1
+rpmspec --buildrequires -q rpmbuild/SPECS/$SPEC | xargs zypper in -y
