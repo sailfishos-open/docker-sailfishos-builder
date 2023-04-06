@@ -49,5 +49,10 @@ docker run --rm --privileged --network=host -v $(pwd):/share -w /share coderus/s
        mic create fs -v -d --arch=$SFOS_ARCH --outdir=/share --tokenmap=ARCH:${SFOS_ARCH},RELEASE:$RELEASE \
        --pack-to=baseimage.tar base_${SFOS_ARCH}_${RELEASE}.ks
 
+# coderus/sailfishos-baseimage works with /proc/sys/fs/binfmt_misc
+# which disturbs the handling by QEMU later. so, restart
+# systemd-binfmt as a workaround. issue #1
+systemctl restart systemd-binfmt
+
 cat Dockerfile | sed -e "s/@RELEASE@/$RELEASE/g" | sed -e "s/@RPMTARGET@/$RPMTARGET/g" | \
     docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f- .
