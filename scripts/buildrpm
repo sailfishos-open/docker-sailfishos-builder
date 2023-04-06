@@ -77,7 +77,7 @@ chown -R builder $BDIR
 su builder rpmdev-setuptree
 
 SRCBASE=`rpmspec -q --srpm --qf "%{name}-%{version}\n" $SPEC`
-TAROPTS="--exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
+TAROPTS="--exclude-vcs --exclude-vcs-ignores --exclude $SRCDIR/RPMS --exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
 
 # pack main sources
 if [[ $SOURCE = *.tar.gz ]]; then
@@ -99,5 +99,12 @@ cp $SPEC $RPMSPECDIR
 su builder -c "rpmbuild -ba --define '_srcdefattr (-,root,root)' --target=$RPMTARGET --nosignature $RPMSPECDIR/$SPECBNAME"
 
 # rpmlint
-su builder -c "rpmlint $RPMDIR/*"
+su builder -c "rpmlint $RPMDIR/"
+
+# copy RPMS to source RPMS subfolder
+mkdir -p $SRCDIR/RPMS
+cp $RPMDIR/*/* $SRCDIR/RPMS/
+chown -R `stat -c '%u:%g' $SRCDIR/.` $SRCDIR/RPMS
+
+echo Ready
 
