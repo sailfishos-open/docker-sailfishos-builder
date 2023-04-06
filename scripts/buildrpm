@@ -8,12 +8,12 @@ where:
  -h       show this help text
 
  -s SPEC  builds using given SPEC. Here, SPEC basename is only
-          expected and should be allocated under rpm/ subfolder
-          of the sources. By default, the first SPEC in rpm/
-          subfolder is used
+	  expected and should be allocated under rpm/ subfolder
+	  of the sources. By default, the first SPEC in rpm/
+	  subfolder is used
 
  -r REPO  additional repository that is needed to fetch packages
-          required for building SPEC
+	  required for building SPEC
 "
 
 
@@ -81,11 +81,11 @@ TAROPTS="--exclude-vcs --exclude-vcs-ignores --exclude $SRCDIR/RPMS --exclude $S
 
 # pack main sources
 if [[ $SOURCE = *.tar.gz ]]; then
-    tar zcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
+    tar cf - $TAROPTS $SRCDIR/ | gzip -1 -n > $RPMSRCDIR/$SOURCE
 elif [[ $SOURCE = *.tar.bz2 ]]; then
-    tar jcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
+    tar cf - $TAROPTS $SRCDIR/ | bzip2 -1 -c > $RPMSRCDIR/$SOURCE
 elif [[ $SOURCE = *.tar.xz ]]; then
-    tar Jcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
+    tar cf - $TAROPTS $SRCDIR/ | xz -0 -c > $RPMSRCDIR/$SOURCE
 else
     echo "Unknown file extension for sources: $SOURCE"
     exit 2
@@ -96,7 +96,7 @@ cp $SRCDIR/rpm/* $RPMSRCDIR/
 cp $SPEC $RPMSPECDIR
 
 # set RPATH check to none as the use in SFOS leads to failure in check
-QA_RPATHS=$(( 0x0001|0x0002 ))
+QA_RPATHS=$(( 0x0001|0x0002|0x0008|0x0010 ))
 
 # start the build
 su builder -c \
@@ -112,6 +112,8 @@ su builder -c "rpmlint $RPMDIR/"
 mkdir -p $SRCDIR/RPMS
 cp $RPMDIR/*/* $SRCDIR/RPMS/
 chown -R `stat -c '%u:%g' $SRCDIR/.` $SRCDIR/RPMS
+chmod +r $SRCDIR/RPMS/*
 
-echo Ready
-
+echo "
+Ready
+"
