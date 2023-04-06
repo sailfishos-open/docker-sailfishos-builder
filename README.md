@@ -7,9 +7,12 @@ to the official SDKs, it doesn't use
 [Scratchbox2](https://github.com/sailfishos/scratchbox2)
 (SB2). Instead, it relies on running either native or through QEMU
 hardware emulation. When using QEMU emulation, expect very slow
-compilation speeds. This build environment was created to address
-official SDK limitations encountered while packaging Qt 5.15 for
-Sailfish OS.
+compilation speeds when compared to SB2.
+
+This build environment was created to address official SDK limitations
+encountered while packaging Qt 5.15 for Sailfish OS. You may want to
+use it if you have a project that is difficult or impossible to
+compile using the official SDK.
 
 
 ## How to use it
@@ -33,20 +36,21 @@ sudo docker run --rm -it -v `pwd`:/source \
 In this example, docker container gets access to the sources by its
 volume mapping your current directory (`pwd`) to `/source` inside the
 container. Container executes `buildrpm` script inside it (see
-[here](scripts/buildrpm) for source) that handles building RPMs from
-SPEC in `/source/rpm`.
+[sources](scripts/buildrpm)) that handles building RPMs from SPEC in
+`/source/rpm`.
 
 There are few options that can be given to `buildrpm` script:
 
-- `-r REMOTE` specify additional repositories for pulling dependencies;
+- `-r REMOTE` specify additional repositories for pulling dependencies
+  (can be given multiple times);
 - `-s SPEC` specify SPEC if there are more than one in `rpm` subfolder
-  of the sources.
+  of the sources. Use just a file basename, as in "test.spec".
 
 If all goes well, RPMs will be created under subfolder `RPMS` of the
 sources.
 
-Note that it is recommended to use `-rm` to remove container as soon
-as it is finished. On every build, clean environment is used and all
+Note that it is recommended to use `--rm` to remove container as soon
+as it is finished. On every build, a clean environment is used and all
 the dependencies are pulled in again.
 
 
@@ -54,7 +58,7 @@ the dependencies are pulled in again.
 
 Inside Docker container, the build is performed in several steps.
 
-First, SPEC file is parsed and all build requirements are
+First, SPEC file is parsed and all the build requirements are
 installed.
 
 Next, RPM build proceeds in a classical way using `rpmbuild`, under a
@@ -68,9 +72,18 @@ bz2, xz, as given in `Source0`) under `/builder/rpmbuild/SOURCES`. In
 addition, all files from your sources `rpm` subfolder are copied to
 `/builder/rpmbuild/SOURCES`, including all patches.
 
-Then the build proceeds under user `builder` with `rpmbuild`. After
-successful build, RPMs are copied into your source folder under `RPMS`
-subfolder. For a feedback, `rpmlint` is applied as well.
+Then the build proceeds under user `builder` with
+`rpmbuild`. `rpmbuild` will unpack the sources, apply patches and
+proceed building your packages. After successful build, RPMs are
+copied into your source folder under `RPMS` subfolder. For a feedback,
+`rpmlint` is applied as well.
+
+Note that, as a new clean environment is created for every build, it
+maybe advantageous to debug the build process and reuse the same
+container in the case of failure. Easiest is just start the container
+with `bash` and execute `buildrpm` already while inside the
+container. It is possible to apply the steps done by `buildrpm`
+manually as well when inside the container.
 
 
 ## Limitations
