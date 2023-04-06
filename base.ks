@@ -13,6 +13,7 @@ repo --name=jolla --baseurl=https://releases.jolla.com/releases/@RELEASE@/jolla/
 atruncate
 attr
 basesystem
+gcc-c++
 gnu-bash
 gnu-coreutils
 gnu-cpio
@@ -26,6 +27,7 @@ gnu-which
 deltarpm
 file
 kbd
+make
 meego-rpm-config
 net-tools
 passwd
