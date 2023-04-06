@@ -56,3 +56,5 @@ systemctl restart systemd-binfmt
 
 cat Dockerfile | sed -e "s/@RELEASE@/$RELEASE/g" | sed -e "s/@RPMTARGET@/$RPMTARGET/g" | \
     docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f- .
+
+rm baseimage.tar
