@@ -77,7 +77,7 @@ chown -R builder $BDIR
 su builder rpmdev-setuptree
 
 SRCBASE=`rpmspec -q --srpm --qf "%{name}-%{version}\n" $SPEC`
-TAROPTS="--exclude-vcs --exclude-vcs-ignores --exclude $SRCDIR/RPMS --exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
+TAROPTS="--exclude-vcs --exclude $SRCDIR/RPMS --exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
 
 # pack main sources
 if [[ $SOURCE = *.tar.gz ]]; then
