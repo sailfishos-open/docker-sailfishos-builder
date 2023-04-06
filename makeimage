@@ -28,12 +28,15 @@ RELEASE=$2
 case "$SFOS_ARCH" in
     "i486")
 	DOCKER_PLATFORM_ARCH=i386
+	RPMTARGET=i486-meego-linux
 	;;
     "aarch64")
 	DOCKER_PLATFORM_ARCH=arm64v8
+	RPMTARGET=aarch64-meego-linux
 	;;
     "armv7hl")
 	DOCKER_PLATFORM_ARCH=arm32v7
+	RPMTARGET=armv7hl-meego-linux
 	;;
     *)
 	echo "Unknown architecture specified:" "$SFOS_ARCH"
@@ -46,5 +49,5 @@ docker run --rm --privileged --network=host -v $(pwd):/share -w /share coderus/s
        mic create fs -v -d --arch=$SFOS_ARCH --outdir=/share --tokenmap=ARCH:${SFOS_ARCH},RELEASE:$RELEASE \
        --pack-to=baseimage.tar base_${SFOS_ARCH}_${RELEASE}.ks
 
-cat Dockerfile | sed -e "s/@RELEASE@/$RELEASE/g" | \
+cat Dockerfile | sed -e "s/@RELEASE@/$RELEASE/g" | sed -e "s/@RPMTARGET@/$RPMTARGET/g" | \
     docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f- .

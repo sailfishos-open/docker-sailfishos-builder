@@ -12,6 +12,9 @@ COPY \
 # ssu release
 RUN ssu re @RELEASE@
 
+# rpm target
+RUN echo @RPMTARGET@ > /etc/rpmtarget
+
 # install required dependencies
 RUN pip3 install progressbar requests
 

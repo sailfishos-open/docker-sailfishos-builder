@@ -20,6 +20,7 @@ where:
 # Builds RPMs from sources found in /source
 SRCDIR=source
 BDIR=/builder
+RPMTARGET=`cat /etc/rpmtarget`
 
 # use / as a base
 cd /
@@ -37,14 +38,14 @@ while getopts 'sr:h' opt; do
       s)
 	  SPEC=$SRCDIR/rpm/$OPTARG
 	  ;;
-      
+
       r)
 	  arg="$OPTARG"
 	  echo "Adding repository $arg"
 	  ssu ar repo-$OPTIND $arg
 	  echo
 	  ;;
-  
+
       ?|h)
 	  echo "$usage"
 	  exit 0
@@ -95,7 +96,7 @@ cp $SRCDIR/rpm/* $RPMSRCDIR/
 cp $SPEC $RPMSPECDIR
 
 # start the build
-su builder -c "rpmbuild -ba $RPMSPECDIR/$SPECBNAME"
+su builder -c "rpmbuild -ba --define '_srcdefattr (-,root,root)' --target=$RPMTARGET --nosignature $RPMSPECDIR/$SPECBNAME"
 
 # rpmlint
 su builder -c "rpmlint $RPMDIR/*"
