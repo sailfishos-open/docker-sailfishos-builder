@@ -84,7 +84,7 @@ if [[ $SOURCE = *.tar.gz ]]; then
     tar zcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
 elif [[ $SOURCE = *.tar.bz2 ]]; then
     tar jcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
-elif [[ $SOURCE = *.tzr.xz ]]; then
+elif [[ $SOURCE = *.tar.xz ]]; then
     tar Jcf $RPMSRCDIR/$SOURCE $TAROPTS $SRCDIR/
 else
     echo "Unknown file extension for sources: $SOURCE"
@@ -95,8 +95,15 @@ fi
 cp $SRCDIR/rpm/* $RPMSRCDIR/
 cp $SPEC $RPMSPECDIR
 
+# set RPATH check to none as the use in SFOS leads to failure in check
+QA_RPATHS=$(( 0x0001|0x0002 ))
+
 # start the build
-su builder -c "rpmbuild -ba --define '_srcdefattr (-,root,root)' --target=$RPMTARGET --nosignature $RPMSPECDIR/$SPECBNAME"
+su builder -c \
+   "QA_RPATHS=$QA_RPATHS rpmbuild -bb \
+       --define '_srcdefattr (-,root,root)' \
+       --target=$RPMTARGET --nosignature \
+       $RPMSPECDIR/$SPECBNAME"
 
 # rpmlint
 su builder -c "rpmlint $RPMDIR/"
