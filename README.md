@@ -27,7 +27,7 @@ with the building. As full build process is performed, make sure that
 the patches used in `%prep` stage apply.
 
 Until published, Docker builder images have to be generated locally
-([see below for instructions](#how-it-works)). 
+([see below for instructions](#how-to-create-builder-images)). 
 
 With the builder image ready, go to the
 folder of your cloned repository root and run (for `sailfishos-i486-4.5.0.19` builder image)
