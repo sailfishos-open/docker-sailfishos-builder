@@ -17,14 +17,20 @@ compile using the official SDK.
 
 ## How to use it
 
+Preparations: 
+ 1. Clone this repositiory or clean it if you already cloned it with `git clean -dfx`
+ 1. initialize submodule with `git submodule update --init`
+
 To use this build environment, you have to have clean sources checked
 out. If your sources have compilation artifacts, those could interfere
 with the building. As full build process is performed, make sure that
 the patches used in `%prep` stage apply.
 
 Until published, Docker builder images have to be generated locally
-(see below for instructions). With the builder image ready, go to your
-source folder and run (for `sailfishos-i486-4.5.0.19` builder image)
+([see below for instructions](#how-to-create-builder-images)). 
+
+With the builder image ready, go to the
+folder of your cloned repository root and run (for `sailfishos-i486-4.5.0.19` builder image)
 build command similar to:
 
 ```
@@ -118,6 +124,16 @@ image can be used for building your packages.
 
 
 ## QEMU setup
+
+You need to setup binfmt for qemu for the architectures you want to use. Follow the instructions for your system
+
+### Arch-based
+Install package `qemu-user-binfmt`.
+
+### Debian-based
+Install package `qemu-user-static`.
+
+### Other
 
 To enable QEMU in systemd based Linux, add `qemu-custom.conf` in
 `/etc/binfmt.d`. Example:
