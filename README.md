@@ -143,9 +143,12 @@ magic 7f454c460201010000000000000000000200b700
 mask ffffffffffffff00fffffffffffffffffeffffff
 ```
 
+See References below for how to test QEMU support using Docker images.
+
 
 ## References
 
 - SFOS Docker scripts: https://github.com/CODeRUS/docker-sailfishos-baseimage
 - Docker architectures: https://github.com/docker-library/official-images#architectures-other-than-amd64
 - QEMU setup: https://wiki.gentoo.org/wiki/Embedded_Handbook/General/Compiling_with_qemu_user_chroot
+- QEMU tests with Docker: https://github.com/multiarch/qemu-user-static
