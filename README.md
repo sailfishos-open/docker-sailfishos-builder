@@ -17,14 +17,20 @@ compile using the official SDK.
 
 ## How to use it
 
+Preparations: 
+ 1. Clone this repositiory or clean it if you already cloned it with `git clean -dfx`
+ 1. initialize submodule with `git submodule update --init`
+
 To use this build environment, you have to have clean sources checked
 out. If your sources have compilation artifacts, those could interfere
 with the building. As full build process is performed, make sure that
 the patches used in `%prep` stage apply.
 
 Until published, Docker builder images have to be generated locally
-(see below for instructions). With the builder image ready, go to your
-source folder and run (for `sailfishos-i486-4.5.0.19` builder image)
+([see below for instructions](#how-it-works)). 
+
+With the builder image ready, go to the
+folder of your cloned repository root and run (for `sailfishos-i486-4.5.0.19` builder image)
 build command similar to:
 
 ```
