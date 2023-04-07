@@ -125,6 +125,16 @@ image can be used for building your packages.
 
 ## QEMU setup
 
+You need to setup binfmt for qemu for the architectures you want to use. Follow the instructions for your system
+
+### Arch-based
+Install package `qemu-user-binfmt`.
+
+### Debian-based
+Install package `qemu-user-static`.
+
+### Other
+
 To enable QEMU in systemd based Linux, add `qemu-custom.conf` in
 `/etc/binfmt.d`. Example:
 
