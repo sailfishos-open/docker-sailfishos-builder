@@ -2,18 +2,20 @@
 
 set -ex
 
-usage="$(basename "$0") [-h] [-s SPEC] [-r REPO]
+usage="$(basename "$0") [-h] [-s SPEC] [-r REPO] [-v VENDOR]
 
 where:
- -h       show this help text
+ -h        show this help text
 
- -s SPEC  builds using given SPEC. Here, SPEC basename is only
-	  expected and should be allocated under rpm/ subfolder
-	  of the sources. By default, the first SPEC in rpm/
-	  subfolder is used
+ -s SPEC   builds using given SPEC. Here, SPEC basename is only
+	   expected and should be allocated under rpm/ subfolder
+	   of the sources. By default, the first SPEC in rpm/
+	   subfolder is used
 
- -r REPO  additional repository that is needed to fetch packages
-	  required for building SPEC
+ -r REPO   additional repository that is needed to fetch packages
+	   required for building SPEC
+
+ -v VENDOR set vendor for RPM
 "
 
 
@@ -32,8 +34,10 @@ RPMDIR=$BDIR/rpmbuild/RPMS
 specs=( $SRCDIR/rpm/*.spec )
 SPEC="${specs[0]}"
 
+VENDOR=""
+
 # handle options
-while getopts 'sr:h' opt; do
+while getopts 'srv:h' opt; do
   case "$opt" in
       s)
 	  SPEC=$SRCDIR/rpm/$OPTARG
@@ -44,6 +48,10 @@ while getopts 'sr:h' opt; do
 	  echo "Adding repository $arg"
 	  zypper ar --gpgcheck-allow-unsigned $arg repo-$OPTIND
 	  echo
+	  ;;
+
+      v)
+	  VENDOR=$OPTARG
 	  ;;
 
       ?|h)
@@ -97,6 +105,11 @@ RELEASE=`rpmspec -q --srpm --qf "%{release}\n" $SPEC`
 RELEASEOFFSET=`date -u +%y%m%d%H%M`
 sed -i "s/^Release:.*/Release: ${RELEASE}.${RELEASEOFFSET}/g" $SPEC
 echo "Set RPM release to ${RELEASE}.${RELEASEOFFSET}"
+
+# set vendor if requested
+if [[ $VENDOR ]]; then
+    sed -i "1s/^/Vendor: $VENDOR\n/" $SPEC
+fi
 
 # determine source name
 SOURCE=$(rpmdev-spectool --source 0 $SPEC | cut -f2 -d" ")

@@ -50,7 +50,8 @@ There are few options that can be given to `buildrpm` script:
 - `-r REMOTE` specify additional repositories for pulling dependencies
   (can be given multiple times);
 - `-s SPEC` specify SPEC if there are more than one in `rpm` subfolder
-  of the sources. Use just a file basename, as in "test.spec".
+  of the sources. Use just a file basename, as in "test.spec";
+- `-v VENDOR` set vendor for RPM.
 
 If all goes well, RPMs will be created under subfolder `RPMS` of the
 sources.
