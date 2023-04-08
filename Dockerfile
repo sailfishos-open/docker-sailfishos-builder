@@ -1,9 +1,13 @@
 FROM scratch
 ADD / /
 
-# rpm database rebuild: somehow doesn't work
-#RUN rm -f /var/lib/rpm/__db*
-#RUN rpm --rebuilddb || echo "For some reason it fails, ignore"
+# rpm database rebuild: somehow doesn't work cleanly
+RUN rm -f /var/lib/rpm/__db*
+RUN \
+    rpm --rebuilddb || \
+    echo "For some reason it fails, ignore. It does rebuild anyway." \
+    rm -rf /var/lib/rpmrebuilddb.* || \
+    echo "Makes sense to remove if it failed above"
 
 # skipping install of SSU - handle repositories via zypper
 #
