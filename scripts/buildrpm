@@ -68,13 +68,39 @@ echo Building $SPECBNAME
 # install dependencies
 rpm-install-build-deps $SPEC
 
-# determine source name
-SOURCE=$(rpmdev-spectool --source 0 $SPEC | cut -f2 -d" ")
-echo Packing sources into $SOURCE
-
 # prepare RPM builder directories
 chown -R builder $BDIR
 su builder rpmdev-setuptree
+
+# copy all other sources and SPEC from rpm subfolder
+cp $SRCDIR/rpm/* $RPMSRCDIR/
+cp $SPEC $RPMSPECDIR
+
+# set SPEC to point to the one that will be used in the build
+SPEC=$RPMSPECDIR/$SPECBNAME
+
+# set version and release of RPM
+pushd $SRCDIR
+if [ -d .git ]; then
+    git config --global --add safe.directory /$SRCDIR
+    VERSION=`git describe --first-parent --tags | sed s/-/+/g`
+    if [[ $VERSION = fatal* || "$VERSION" = "" ]]; then
+	echo "Looks like not Git repository, keeping version as in SPEC"
+    else
+	sed -i "s/^Version:.*/Version: $VERSION/g" $SPEC
+	echo "Set RPM version to: $VERSION"
+    fi
+fi
+popd
+
+RELEASE=`rpmspec -q --srpm --qf "%{release}\n" $SPEC`
+RELEASEOFFSET=`date -u +%y%m%d%H%M`
+sed -i "s/^Release:.*/Release: ${RELEASE}.${RELEASEOFFSET}/g" $SPEC
+echo "Set RPM release to ${RELEASE}.${RELEASEOFFSET}"
+
+# determine source name
+SOURCE=$(rpmdev-spectool --source 0 $SPEC | cut -f2 -d" ")
+echo Packing sources into $SOURCE
 
 SRCBASE=`rpmspec -q --srpm --qf "%{name}-%{version}\n" $SPEC`
 TAROPTS="--exclude-vcs --exclude $SRCDIR/RPMS --exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
@@ -91,10 +117,6 @@ else
     exit 2
 fi
 
-# copy all other sources and SPEC from rpm subfolder
-cp $SRCDIR/rpm/* $RPMSRCDIR/
-cp $SPEC $RPMSPECDIR
-
 # set RPATH check to none as the use in SFOS leads to failure in check
 QA_RPATHS=$(( 0x0001|0x0002|0x0008|0x0010 ))
 
@@ -103,7 +125,7 @@ su builder -c \
    "QA_RPATHS=$QA_RPATHS rpmbuild -bb \
        --define '_srcdefattr (-,root,root)' \
        --target=$RPMTARGET --nosignature \
-       $RPMSPECDIR/$SPECBNAME"
+       $SPEC"
 
 # rpmlint
 su builder -c "rpmlint $RPMDIR/"

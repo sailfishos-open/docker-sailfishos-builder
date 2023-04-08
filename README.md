@@ -67,6 +67,12 @@ Inside Docker container, the build is performed in several steps.
 First, SPEC file is parsed and all the build requirements are
 installed.
 
+Second, if sources are in Git repository, RPM version will be
+determined based on the latest git tag and its offset from
+HEAD. Regardless of whether sources are in Git or not, release will be
+offset by UTC timestamp. Such handling of RPM version and release will
+ensure the newest builds would have larger version-release pair.
+
 Next, RPM build proceeds in a classical way using `rpmbuild`, under a
 dedicated user `builder`. For that, folders for building are setup
 under `/builder/rpmbuild`. It is possible to debug intermediate steps

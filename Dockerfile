@@ -9,11 +9,20 @@ RUN \
     rm -rf /var/lib/rpmrebuilddb.* || \
     echo "Makes sense to remove if it failed above"
 
+# install packages that have to be installed after base system is
+# settled
+RUN \
+    zypper --non-interactive in \
+    git
+
 # skipping install of SSU - handle repositories via zypper
 #
 # # setup ssu - cannot be installed in setup-root due to gpg errors
 # RUN zypper --non-interactive in ssu ssu-vendor-data-jolla
 # RUN ssu re @RELEASE@
+
+# clear zypper cache
+RUN rm -rf /home/.zypp-cache
 
 # install required dependencies
 RUN pip3 install progressbar requests

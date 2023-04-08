@@ -4,6 +4,9 @@ set -ex
 
 INSTALL_ROOT=/sfos
 
+# packages that have to be installed later:
+# - git (otherwise %posttrans script 'filesystem' will fail on armv7hl
+
 PACKAGES="
 atruncate
 attr
@@ -67,4 +70,3 @@ echo @RPMTARGET@ > $INSTALL_ROOT/etc/rpmtarget
 
 # drop lastlog - Docker will just waste storage on it
 rm -f $INSTALL_ROOT/var/log/lastlog
-rm -rf $INSTALL_ROOT/home/.zypp-cache
