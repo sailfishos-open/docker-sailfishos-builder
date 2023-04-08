@@ -105,10 +105,10 @@ be in the form `%{name}-%{version}.tar.bz2` (.gz and .zx are supported
 as well).
 
 While we get rid of SB2 bugs, there are possible QEMU issues that can
-interfere. For example, see
-[issue #6](https://github.com/sailfishos-open/docker-sailfishos-builder/issues/6).
-It is recommended then to check whether QEMU distributed by Jolla works
-better.
+interfere. For example, armv7hl could be hit with [issue
+#6](https://github.com/sailfishos-open/docker-sailfishos-builder/issues/6).
+See issue for problem description. It is recommended then to check
+whether QEMU distributed by Jolla works better.
 
 
 ## How to create builder images
