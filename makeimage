@@ -43,18 +43,44 @@ case "$SFOS_ARCH" in
 	exit -1
 esac
 
-rm -f baseimage.tar
-cp base.ks base_${SFOS_ARCH}_${RELEASE}.ks
-docker run --rm --privileged --network=host -v $(pwd):/share -w /share coderus/sailfishos-baseimage \
-       mic create fs -v -d --arch=$SFOS_ARCH --outdir=/share --tokenmap=ARCH:${SFOS_ARCH},RELEASE:$RELEASE \
-       --pack-to=baseimage.tar base_${SFOS_ARCH}_${RELEASE}.ks
+# allocate temp directory and ensure it is removed on exit
+SFOS_DIR=`mktemp -d`
 
-# coderus/sailfishos-baseimage works with /proc/sys/fs/binfmt_misc
-# which disturbs the handling by QEMU later. so, restart
-# systemd-binfmt as a workaround. issue #1
-systemctl restart systemd-binfmt
+if [[ ! "$SFOS_DIR" || ! -d "$SFOS_DIR" ]]; then
+  echo "Could not create temporary directory for Sailfish OS root"
+  exit 1
+fi
 
-cat Dockerfile | sed -e "s/@RELEASE@/$RELEASE/g" | sed -e "s/@RPMTARGET@/$RPMTARGET/g" | \
-    docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f- .
+echo "Temporary directory used to create Sailfish OS root: $SFOS_DIR"
 
-rm baseimage.tar
+# deletes the temp directory
+function cleanup {
+  rm -rf "$SFOS_DIR"
+  echo "Deleted temp working directory $SFOS_DIR"
+}
+
+# register the cleanup function to be called on the EXIT signal
+trap cleanup EXIT
+
+# create root using coderus/sailfishos-baseimage
+cat scripts/setup-root |
+    sed -e "s/@RELEASE@/$RELEASE/g" |
+    sed -e "s/@ARCH@/$SFOS_ARCH/g" |
+    sed -e "s/@RPMTARGET@/$RPMTARGET/g" |
+    docker run --rm -i -v $SFOS_DIR:/sfos coderus/sailfishos-baseimage \
+	   bash
+
+# copy tools used for building
+cp \
+    scripts/buildrpm \
+    scripts/rpm-install-build-deps \
+    rpmdevtools/rpmdev-spectool \
+    rpmdevtools/rpmdev-setuptree \
+    $SFOS_DIR/usr/bin/
+
+cat Dockerfile | \
+    sed -e "s/@RELEASE@/$RELEASE/g" |
+    sed -e "s/@ARCH@/$SFOS_ARCH/g" |
+    sed -e "s/@RPMTARGET@/$RPMTARGET/g" |
+    docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f- \
+	   $SFOS_DIR

@@ -1,22 +1,19 @@
 FROM scratch
-ADD baseimage.tar /
+ADD / /
 
-# copy tools
-COPY \
-    scripts/buildrpm \
-    scripts/rpm-install-build-deps \
-    rpmdevtools/rpmdev-spectool \
-    rpmdevtools/rpmdev-setuptree \
-    /usr/bin/
+# rpm database rebuild: somehow doesn't work
+#RUN rm -f /var/lib/rpm/__db*
+#RUN rpm --rebuilddb || echo "For some reason it fails, ignore"
 
-# ssu release
-RUN ssu re @RELEASE@
-
-# rpm target
-RUN echo @RPMTARGET@ > /etc/rpmtarget
+# skipping install of SSU - handle repositories via zypper
+#
+# # setup ssu - cannot be installed in setup-root due to gpg errors
+# RUN zypper --non-interactive in ssu ssu-vendor-data-jolla
+# RUN ssu re @RELEASE@
 
 # install required dependencies
 RUN pip3 install progressbar requests
+RUN rm -rf /root/.cache
 
 # create source location
 RUN mkdir /source
