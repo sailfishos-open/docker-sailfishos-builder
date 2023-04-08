@@ -42,7 +42,7 @@ while getopts 'sr:h' opt; do
       r)
 	  arg="$OPTARG"
 	  echo "Adding repository $arg"
-	  ssu ar repo-$OPTIND $arg
+	  zypper ar --gpgcheck-allow-unsigned $arg repo-$OPTIND
 	  echo
 	  ;;
 
