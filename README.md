@@ -104,6 +104,10 @@ Due to the way the builder works, Source0 from RPM SPEC is expected to
 be in the form `%{name}-%{version}.tar.bz2` (.gz and .zx are supported
 as well).
 
+While we get rid of SB2 bugs, there are possible QEMU issues that can
+interfere. For example, see #6. It is recommended then to check
+whether QEMU distributed by Jolla works better.
+
 
 ## How to create builder images
 
