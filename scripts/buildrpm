@@ -37,7 +37,7 @@ SPEC="${specs[0]}"
 VENDOR=""
 
 # handle options
-while getopts 'srv:h' opt; do
+while getopts 's:r:v:h' opt; do
   case "$opt" in
       s)
 	  SPEC=$SRCDIR/rpm/$OPTARG
