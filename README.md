@@ -40,7 +40,7 @@ sudo docker run --rm -it -v `pwd`:/source \
 ```
 
 In this example, docker container gets access to the sources by its
-volume mapping your current directory (`pwd`) to `/source` inside the
+volume mapping your current folder (`pwd`) to `/source` inside the
 container. Container executes `buildrpm` script inside it (see
 [sources](scripts/buildrpm)) that handles building RPMs from SPEC in
 `/source/rpm`.
@@ -52,6 +52,7 @@ There are few options that can be given to `buildrpm` script:
 - `-s SPEC` specify SPEC if there are more than one in `rpm` subfolder
   of the sources. Use just a file basename, as in "test.spec";
 - `-v VENDOR` set vendor for RPM.
+- `-p` skip generation of source package and use the one in `rpm` subfolder.
 
 If all goes well, RPMs will be created under subfolder `RPMS` of the
 sources.
@@ -61,6 +62,38 @@ as it is finished. On every build, a clean environment is used and all
 the dependencies are pulled in again.
 
 
+### Using with sources in archive
+
+In addition to the mode, where the build is performed using checked
+out sources, it is possible to build packages when the sources are
+already available in packaged form. For example, Node.js as packaged
+at
+[OBS](https://build.merproject.org/package/show/sailfishos:chum:testing/nodejs18). In
+this case, you have to use option `-p` and mount volumes separately
+for `/source/rpm` and `/source/RPMS`. Here, `/source/rpm` should be
+linked with the host folder that has RPM SPEC, source archive as
+referenced in SPEC, and all patches. Folder `/source/RPMS` has to be
+linked with a host folder that will receive compiled RPMS. If you
+forget to specify the latter, your compiled RPMS would stay in docker
+container. It is expected that `/source/rpm` and `/source/RPMS` point
+to different folders on host.
+
+Example command :
+```
+sudo docker run --rm -it \
+   -v `pwd`/../nodejs18:/source/rpm \
+   -v `pwd`:/source/RPMS \
+   sailfishos-i486-4.5.0.19 \
+   buildrpm -p -v chum \
+       -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.5.0.19_i486/
+```
+
+In this example, Node.js RPMs are built and saved into the current
+folder (`pwd`). Corresponding sources are in a folder
+`../nodejs18`. It is also setting vendor to `chum` and is using one of
+Chum repositories.
+
+
 ## How it works
 
 Inside Docker container, the build is performed in several steps.
@@ -68,11 +101,12 @@ Inside Docker container, the build is performed in several steps.
 First, SPEC file is parsed and all the build requirements are
 installed.
 
-Second, if sources are in Git repository, RPM version will be
-determined based on the latest git tag and its offset from
-HEAD. Regardless of whether sources are in Git or not, release will be
-offset by UTC timestamp. Such handling of RPM version and release will
-ensure the newest builds would have larger version-release pair.
+Second, if sources are in Git repository and `-p` option was not used,
+RPM version will be determined based on the latest git tag and its
+offset from HEAD. Regardless of whether sources are in Git or not,
+release will be offset by UTC timestamp. Such handling of RPM version
+and release will ensure the newest builds would have larger
+version-release pair.
 
 Next, RPM build proceeds in a classical way using `rpmbuild`, under a
 dedicated user `builder`. For that, folders for building are setup
@@ -81,9 +115,10 @@ through creation of the volume linking to `/builder/rpmbuild` in
 docker container.
 
 Before starting the build, your sources are packed into tar.gz (or
-bz2, xz, as given in `Source0`) under `/builder/rpmbuild/SOURCES`. In
-addition, all files from your sources `rpm` subfolder are copied to
-`/builder/rpmbuild/SOURCES`, including all patches.
+bz2, xz, as given in `Source0`) under
+`/builder/rpmbuild/SOURCES`. This step is skipped if `-p` option was
+given. In addition, all files from your sources `rpm` subfolder are
+copied to `/builder/rpmbuild/SOURCES`, including all patches.
 
 Then the build proceeds under user `builder` with
 `rpmbuild`. `rpmbuild` will unpack the sources, apply patches and

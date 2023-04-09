@@ -16,6 +16,8 @@ where:
 	   required for building SPEC
 
  -v VENDOR set vendor for RPM
+
+ -p        skip generation of source package and use the one in sources/rpm
 "
 
 
@@ -34,10 +36,11 @@ RPMDIR=$BDIR/rpmbuild/RPMS
 specs=( $SRCDIR/rpm/*.spec )
 SPEC="${specs[0]}"
 
-VENDOR=""
+VENDOR=
+GENERATE_SOURCE_PACKAGE=1
 
 # handle options
-while getopts 's:r:v:h' opt; do
+while getopts 's:r:v:ph' opt; do
   case "$opt" in
       s)
 	  SPEC=$SRCDIR/rpm/$OPTARG
@@ -52,6 +55,10 @@ while getopts 's:r:v:h' opt; do
 
       v)
 	  VENDOR=$OPTARG
+	  ;;
+
+      p)
+	  GENERATE_SOURCE_PACKAGE=
 	  ;;
 
       ?|h)
@@ -87,47 +94,51 @@ cp $SPEC $RPMSPECDIR
 # set SPEC to point to the one that will be used in the build
 SPEC=$RPMSPECDIR/$SPECBNAME
 
-# set version and release of RPM
-pushd $SRCDIR
-if [ -d .git ]; then
-    git config --global --add safe.directory /$SRCDIR
-    VERSION=`git describe --first-parent --tags | sed s/-/+/g`
-    if [[ $VERSION = fatal* || "$VERSION" = "" ]]; then
-	echo "Looks like not Git repository, keeping version as in SPEC"
-    else
-	sed -i "s/^Version:.*/Version: $VERSION/g" $SPEC
-	echo "Set RPM version to: $VERSION"
-    fi
-fi
-popd
-
-RELEASE=`rpmspec -q --srpm --qf "%{release}\n" $SPEC`
-RELEASEOFFSET=`date -u +%y%m%d%H%M`
-sed -i "s/^Release:.*/Release: ${RELEASE}.${RELEASEOFFSET}/g" $SPEC
-echo "Set RPM release to ${RELEASE}.${RELEASEOFFSET}"
-
 # set vendor if requested
 if [[ $VENDOR ]]; then
     sed -i "1s/^/Vendor: $VENDOR\n/" $SPEC
 fi
 
-# determine source name
-SOURCE=$(rpmdev-spectool --source 0 $SPEC | cut -f2 -d" ")
-echo Packing sources into $SOURCE
+# set release of RPM
+RELEASE=`rpmspec -q --srpm --qf "%{release}\n" $SPEC`
+RELEASEOFFSET=`date -u +%y%m%d%H%M`
+sed -i "s/^Release:.*/Release: ${RELEASE}.${RELEASEOFFSET}/g" $SPEC
+echo "Set RPM release to ${RELEASE}.${RELEASEOFFSET}"
 
-SRCBASE=`rpmspec -q --srpm --qf "%{name}-%{version}\n" $SPEC`
-TAROPTS="--exclude-vcs --exclude $SRCDIR/RPMS --exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
+# set version and generate source archive if needed
+if [[ $GENERATE_SOURCE_PACKAGE ]]; then
+    # determine version and alter it if git repository
+    pushd $SRCDIR
+    if [ -d .git ]; then
+	git config --global --add safe.directory /$SRCDIR
+	VERSION=`git describe --first-parent --tags | sed s/-/+/g`
+	if [[ $VERSION = fatal* || "$VERSION" = "" ]]; then
+	    echo "Looks like not Git repository, keeping version as in SPEC"
+	else
+	    sed -i "s/^Version:.*/Version: $VERSION/g" $SPEC
+	    echo "Set RPM version to: $VERSION"
+	fi
+    fi
+    popd
 
-# pack main sources
-if [[ $SOURCE = *.tar.gz ]]; then
-    tar cf - $TAROPTS $SRCDIR/ | gzip -1 -n > $RPMSRCDIR/$SOURCE
-elif [[ $SOURCE = *.tar.bz2 ]]; then
-    tar cf - $TAROPTS $SRCDIR/ | bzip2 -1 -c > $RPMSRCDIR/$SOURCE
-elif [[ $SOURCE = *.tar.xz ]]; then
-    tar cf - $TAROPTS $SRCDIR/ | xz -0 -c > $RPMSRCDIR/$SOURCE
-else
-    echo "Unknown file extension for sources: $SOURCE"
-    exit 2
+    # determine source name
+    SOURCE=$(rpmdev-spectool --source 0 $SPEC | cut -f2 -d" ")
+    echo Packing sources into $SOURCE
+
+    SRCBASE=`rpmspec -q --srpm --qf "%{name}-%{version}\n" $SPEC`
+    TAROPTS="--exclude-vcs --exclude $SRCDIR/RPMS --exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
+
+    # pack main sources
+    if [[ $SOURCE = *.tar.gz ]]; then
+	tar cf - $TAROPTS $SRCDIR/ | gzip -1 -n > $RPMSRCDIR/$SOURCE
+    elif [[ $SOURCE = *.tar.bz2 ]]; then
+	tar cf - $TAROPTS $SRCDIR/ | bzip2 -1 -c > $RPMSRCDIR/$SOURCE
+    elif [[ $SOURCE = *.tar.xz ]]; then
+	tar cf - $TAROPTS $SRCDIR/ | xz -0 -c > $RPMSRCDIR/$SOURCE
+    else
+	echo "Unknown file extension for sources: $SOURCE"
+	exit 2
+    fi
 fi
 
 # set RPATH check to none as the use in SFOS leads to failure in check
