@@ -1,5 +1,25 @@
+FROM coderus/sailfishos-baseimage AS build
+
+ARG SFOS_ARCH=i486
+ARG RELEASE=4.6.0.13
+
+RUN mkdir /app
+WORKDIR /app
+
+COPY ./scripts/setup-root /app
+RUN chmod +x setup-root
+
+RUN /app/setup-root $SFOS_ARCH $RELEASE
+
 FROM scratch
-ADD / /
+
+COPY --from=build /sfos /
+COPY \
+    scripts/buildrpm  \
+    scripts/rpm-install-build-deps \
+    rpmdevtools/rpmdev-spectool \
+    rpmdevtools/rpmdev-setuptree \
+    /usr/bin
 
 # rpm database rebuild: somehow doesn't work cleanly
 RUN rm -f /var/lib/rpm/__db*

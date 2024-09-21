@@ -2,6 +2,29 @@
 
 set -ex
 
+if [ "$#" -ne 2 ]; then
+    echo "Illegal number of parameters"
+    exit 1
+fi
+
+SFOS_ARCH=$1
+RELEASE=$2
+
+case "$SFOS_ARCH" in
+    "i486")
+	RPMTARGET=i486-meego-linux
+	;;
+    "aarch64")
+	RPMTARGET=aarch64-meego-linux
+	;;
+    "armv7hl")
+	RPMTARGET=armv7hl-meego-linux
+	;;
+    *)
+	echo "Unknown architecture specified:" "$SFOS_ARCH"
+	exit -1
+esac
+
 INSTALL_ROOT=/sfos
 
 # packages that have to be installed later:
@@ -45,28 +68,28 @@ zypper
 "
 
 # switch arch to the desired one
-echo "arch = @ARCH@" >> /etc/zypp/zypp.conf
+echo "arch = $SFOS_ARCH" >> /etc/zypp/zypp.conf
 
 # init rpm database
 rpm --root $INSTALL_ROOT --initdb
 
 # define repositories
 zypper --root $INSTALL_ROOT ar \
-       https://releases.jolla.com/releases/@RELEASE@/jolla-hw/adaptation-common/@ARCH@/ adaptation-common
-zypper --root $INSTALL_ROOT ar https://releases.jolla.com/jolla-apps/@RELEASE@/@ARCH@/ apps
-zypper --root $INSTALL_ROOT ar https://releases.jolla.com/releases/@RELEASE@/hotfixes/@ARCH@/ hotfixes
-zypper --root $INSTALL_ROOT ar https://releases.jolla.com/releases/@RELEASE@/jolla/@ARCH@/ jolla
+       https://releases.jolla.com/releases/$RELEASE/jolla-hw/adaptation-common/$SFOS_ARCH/ adaptation-common
+zypper --root $INSTALL_ROOT ar https://releases.jolla.com/jolla-apps/$RELEASE/$SFOS_ARCH/ apps
+zypper --root $INSTALL_ROOT ar https://releases.jolla.com/releases/$RELEASE/hotfixes/$SFOS_ARCH/ hotfixes
+zypper --root $INSTALL_ROOT ar https://releases.jolla.com/releases/$RELEASE/jolla/$SFOS_ARCH/ jolla
 
 # install packages
 zypper --gpg-auto-import-keys --non-interactive \
        --root $INSTALL_ROOT in $PACKAGES
 
-echo -n "@ARCH@-meego-linux" > $INSTALL_ROOT/etc/rpm/platform
-echo "arch = @ARCH@" >> $INSTALL_ROOT/etc/zypp/zypp.conf
+echo -n "$SFOS_ARCH-meego-linux" > $INSTALL_ROOT/etc/rpm/platform
+echo "arch = $SFOS_ARCH" >> $INSTALL_ROOT/etc/zypp/zypp.conf
 echo "BUILD: SailfishOS Builder" >> $INSTALL_ROOT/etc/meego-release
 
 # rpmtarget used by buildrpm
-echo @RPMTARGET@ > $INSTALL_ROOT/etc/rpmtarget
+echo $RPMTARGET > $INSTALL_ROOT/etc/rpmtarget
 
 # drop lastlog - Docker will just waste storage on it
 rm -f $INSTALL_ROOT/var/log/lastlog

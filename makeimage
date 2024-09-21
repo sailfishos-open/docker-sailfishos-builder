@@ -2,24 +2,50 @@
 
 set -e
 
-usage="$(basename "$0") [-h] ARCH REL
+# Default value for engine
+ENGINE="podman"
 
-where:
-    -h    show this help text
-    ARCH  Sailfish OS arch
-    REL   Sailfish OS release
-"
-
-if [ "$1" == "-h" ]; then
-    echo "$usage"
-    exit 0
-fi
-
-if [ "$#" -ne 2 ]; then
-    echo "Illegal number of parameters"
-    echo
-    echo "$usage"
+# Function to display help text
+usage() {
+    echo "Usage: $0 [-e engine] ARCH RELEASE"
+    echo ""
+    echo "Optional arguments:"
+    echo "  -e engine     Specify whether to use podman (default) or docker"
+    echo "  -h            Display this help message"
+    echo ""
+    echo "Positional arguments:"
+    echo "  ARCH          Sailfish OS architecture"
+    echo "  RELEASE       Sailfish OS release version"
     exit 1
+}
+
+# Parse optional arguments
+while getopts ":e:h" opt; do
+  case ${opt} in
+    e )
+      ENGINE=$OPTARG
+      ;;
+    h )
+      usage
+      ;;
+    \? )
+      echo "Invalid option: -$OPTARG" 1>&2
+      usage
+      ;;
+    : )
+      echo "Option -$OPTARG requires an argument." 1>&2
+      usage
+      ;;
+  esac
+done
+
+# Shift to move past the processed options
+shift $((OPTIND -1))
+
+# Check if we have exactly two positional arguments (ARCH and RELEASE)
+if [ $# -ne 2 ]; then
+    echo "Error: ARCH and RELEASE are required."
+    usage
 fi
 
 SFOS_ARCH=$1
@@ -28,59 +54,24 @@ RELEASE=$2
 case "$SFOS_ARCH" in
     "i486")
 	DOCKER_PLATFORM_ARCH=i386
-	RPMTARGET=i486-meego-linux
 	;;
     "aarch64")
 	DOCKER_PLATFORM_ARCH=arm64v8
-	RPMTARGET=aarch64-meego-linux
 	;;
     "armv7hl")
 	DOCKER_PLATFORM_ARCH=arm32v7
-	RPMTARGET=armv7hl-meego-linux
 	;;
     *)
 	echo "Unknown architecture specified:" "$SFOS_ARCH"
 	exit -1
 esac
 
-# allocate temp directory and ensure it is removed on exit
-SFOS_DIR=`mktemp -d`
+echo "Engine: $ENGINE"
+echo "Architecture: $SFOS_ARCH"
+echo "Release: $RELEASE"
+echo "Docker arch: $DOCKER_PLATFORM_ARCH"
 
-if [[ ! "$SFOS_DIR" || ! -d "$SFOS_DIR" ]]; then
-  echo "Could not create temporary directory for Sailfish OS root"
-  exit 1
-fi
-
-echo "Temporary directory used to create Sailfish OS root: $SFOS_DIR"
-
-# deletes the temp directory
-function cleanup {
-  rm -rf "$SFOS_DIR"
-  echo "Deleted temp working directory $SFOS_DIR"
-}
-
-# register the cleanup function to be called on the EXIT signal
-trap cleanup EXIT
-
-# create root using coderus/sailfishos-baseimage
-cat scripts/setup-root |
-    sed -e "s/@RELEASE@/$RELEASE/g" |
-    sed -e "s/@ARCH@/$SFOS_ARCH/g" |
-    sed -e "s/@RPMTARGET@/$RPMTARGET/g" |
-    docker run --rm -i -v $SFOS_DIR:/sfos coderus/sailfishos-baseimage \
-	   bash
-
-# copy tools used for building
-cp \
-    scripts/buildrpm \
-    scripts/rpm-install-build-deps \
-    rpmdevtools/rpmdev-spectool \
-    rpmdevtools/rpmdev-setuptree \
-    $SFOS_DIR/usr/bin/
-
-cat Dockerfile | \
-    sed -e "s/@RELEASE@/$RELEASE/g" |
-    sed -e "s/@ARCH@/$SFOS_ARCH/g" |
-    sed -e "s/@RPMTARGET@/$RPMTARGET/g" |
-    docker build -t sailfishos-${SFOS_ARCH}-${RELEASE} --platform=linux/$DOCKER_PLATFORM_ARCH -f- \
-	   $SFOS_DIR
+$ENGINE build \
+    --build-arg SFOS_ARCH=$SFOS_ARCH --build-arg RELEASE=$RELEASE \
+    -t sailfishos-${SFOS_ARCH}-${RELEASE} \
+    .
