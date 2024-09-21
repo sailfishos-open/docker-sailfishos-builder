@@ -81,7 +81,7 @@ to different folders on host.
 
 Example command :
 ```
-sudo podman run --rm -it \
+podman run --rm -it \
    -v `pwd`/../nodejs18:/source/rpm \
    -v `pwd`:/source/RPMS \
    sailfishos-i486-4.5.0.19 \
