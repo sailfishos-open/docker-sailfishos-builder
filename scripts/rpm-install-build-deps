@@ -1,5 +1,10 @@
 #!/bin/bash
 
 SPEC=$1
-rpmspec --buildrequires -q $SPEC |
-    xargs zypper --non-interactive in
+
+DEPS=$(rpmspec --buildrequires -q $SPEC)
+if [[ -n "$DEPS" ]]; then
+    echo "$DEPS" | xargs zypper --non-interactive in
+else
+    echo "No dependencies found."
+fi
