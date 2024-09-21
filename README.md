@@ -1,6 +1,4 @@
-# Sailfish OS build environment based on Docker
-
-**Status: Testing**
+# Sailfish OS build environment based on containers
 
 This is an alternative build environment for Sailfish OS. In contrast
 to the official SDKs, it doesn't use
@@ -14,6 +12,9 @@ encountered while packaging Qt 5.15 for Sailfish OS. You may want to
 use it if you have a project that is difficult or impossible to
 compile using the official SDK.
 
+It is recommended to use the environment with `podman`. While docker may work
+as well, it is not tested with it.
+
 
 ## How to use it
 
@@ -26,7 +27,7 @@ out. If your sources have compilation artifacts, those could interfere
 with the building. As full build process is performed, make sure that
 the patches used in `%prep` stage apply.
 
-Until published, Docker builder images have to be generated locally
+Until published, builder images have to be generated locally
 ([see below for instructions](#how-to-create-builder-images)). 
 
 With the builder image ready, go to the
@@ -34,12 +35,12 @@ folder of your cloned repository root and run (for `sailfishos-i486-4.5.0.19` bu
 build command similar to:
 
 ```
-sudo docker run --rm -it -v `pwd`:/source \
+podman run --rm -it -v `pwd`:/source \
    sailfishos-i486-4.5.0.19 buildrpm \
      -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.5.0.19_i486/
 ```
 
-In this example, docker container gets access to the sources by its
+In this example, Podman container gets access to the sources by its
 volume mapping your current folder (`pwd`) to `/source` inside the
 container. Container executes `buildrpm` script inside it (see
 [sources](scripts/buildrpm)) that handles building RPMs from SPEC in
@@ -74,13 +75,13 @@ for `/source/rpm` and `/source/RPMS`. Here, `/source/rpm` should be
 linked with the host folder that has RPM SPEC, source archive as
 referenced in SPEC, and all patches. Folder `/source/RPMS` has to be
 linked with a host folder that will receive compiled RPMS. If you
-forget to specify the latter, your compiled RPMS would stay in docker
+forget to specify the latter, your compiled RPMS would stay in the
 container. It is expected that `/source/rpm` and `/source/RPMS` point
 to different folders on host.
 
 Example command :
 ```
-sudo docker run --rm -it \
+sudo podman run --rm -it \
    -v `pwd`/../nodejs18:/source/rpm \
    -v `pwd`:/source/RPMS \
    sailfishos-i486-4.5.0.19 \
@@ -96,7 +97,7 @@ Chum repositories.
 
 ## How it works
 
-Inside Docker container, the build is performed in several steps.
+Inside Podman container, the build is performed in several steps.
 
 First, SPEC file is parsed and all the build requirements are
 installed.
@@ -112,7 +113,7 @@ Next, RPM build proceeds in a classical way using `rpmbuild`, under a
 dedicated user `builder`. For that, folders for building are setup
 under `/builder/rpmbuild`. It is possible to debug intermediate steps
 through creation of the volume linking to `/builder/rpmbuild` in
-docker container.
+the container.
 
 Before starting the build, your sources are packed into tar.gz (or
 bz2, xz, as given in `Source0`) under
@@ -139,7 +140,7 @@ manually as well when inside the container.
 The scripts are not handling many cases in a flexible manner provided
 by `mb2` from official SDK. For example, during packaging, sources are
 packed and then unpacked which wastes time and allocates storage,
-until docker container is destroyed. There are probably many other
+until the container is destroyed. There are probably many other
 cases where `mb2` would be able to handle building better.
 
 Due to the way the builder works, Source0 from RPM SPEC is expected to
@@ -155,19 +156,19 @@ whether QEMU distributed by Jolla works better.
 
 ## How to create builder images
 
-Builder Docker images are very easy to create using `makeimage`
+Builder container images are very easy to create using `makeimage`
 script. Make sure you have QEMU setup working for all architectures
 that you want to use (see below for QEMU setup, if needed).
 
 Script `makeimage` takes two arguments: SFOS architecture (i486,
-aarch64, armv7hl) and SFOS version. Due to issue #1, you would want to
-run the script as root:
+aarch64, armv7hl) and SFOS version. It is also possible to specify
+whether to use podman (default) or docker for containers. Example:
 
 ```
-sudo ./makeimage i486 4.5.0.19
+./makeimage i486 4.5.0.19
 ```
 
-This will create locally Docker image `sailfishos-i486-4.5.0.19`. This
+This will create locally Podman container image `sailfishos-i486-4.5.0.19`. This
 image can be used for building your packages.
 
 
