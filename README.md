@@ -32,7 +32,7 @@ Builder images can be generated locally
 [ghcr.io](https://github.com/orgs/sailfishos-open/packages?repo_name=docker-sailfishos-builder). 
 
 With the builder image ready, go to the
-folder of your cloned repository root and run (for `sailfishos-i486-4.6.0.13` builder image)
+folder of your cloned repository root and run (for `sailfishos-i486-4.6.0.13`)
 build command similar to:
 
 ```
