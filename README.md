@@ -36,7 +36,7 @@ build command similar to:
 
 ```
 podman run --rm -it -v `pwd`:/source \
-   sailfishos-i486-4.5.0.19 buildrpm \
+   docker-sailfishos-builder-i486:4.5.0.19 buildrpm \
      -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.5.0.19_i486/
 ```
 
@@ -84,7 +84,7 @@ Example command :
 podman run --rm -it \
    -v `pwd`/../nodejs18:/source/rpm \
    -v `pwd`:/source/RPMS \
-   sailfishos-i486-4.5.0.19 \
+   docker-sailfishos-builder-i486:4.5.0.19 \
    buildrpm -p -v chum \
        -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.5.0.19_i486/
 ```
@@ -168,7 +168,7 @@ whether to use podman (default) or docker for containers. Example:
 ./makeimage i486 4.5.0.19
 ```
 
-This will create locally Podman container image `sailfishos-i486-4.5.0.19`. This
+This will create locally Podman container image `docker-sailfishos-builder-i486:4.5.0.19`. This
 image can be used for building your packages.
 
 

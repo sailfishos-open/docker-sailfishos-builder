@@ -73,5 +73,6 @@ echo "Docker arch: $DOCKER_PLATFORM_ARCH"
 
 $ENGINE build \
     --build-arg SFOS_ARCH=$SFOS_ARCH --build-arg RELEASE=$RELEASE \
-    --platform=linux/$DOCKER_PLATFORM_ARCH -t sailfishos-${SFOS_ARCH}-${RELEASE} \
+    --platform=linux/$DOCKER_PLATFORM_ARCH -t docker-sailfishos-builder-${SFOS_ARCH}:${RELEASE} \
+    --annotation org.opencontainers.image.source=https://github.com/sailfishos-open/docker-sailfishos-builder \
     .

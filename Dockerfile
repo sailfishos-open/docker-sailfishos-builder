@@ -96,4 +96,6 @@ WORKDIR /builder/rpmbuild
 USER root
 WORKDIR /builder
 
+LABEL org.opencontainers.image.source="https://github.com/sailfishos-open/docker-sailfishos-builder"
+
 CMD ["/usr/bin/bash"]
