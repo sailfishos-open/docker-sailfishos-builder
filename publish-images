@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+VERSIONS="4.6.0.13"
+ARCH="i486 aarch64 armv7hl"
+
+for version in $VERSIONS; do
+  for arch in $ARCH; do
+    echo "Building for version $version for architecture $arch"
+    ./makeimage $arch $version
+
+    podman push \
+       localhost/docker-sailfishos-builder-$arch:$version \
+       ghcr.io/sailfishos-open/docker-sailfishos-builder-$arch:$version
+  done
+done
