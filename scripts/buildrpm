@@ -12,12 +12,12 @@ where:
 	   of the sources. By default, the first SPEC in rpm/
 	   subfolder is used
 
- -r REPO   additional repository that is needed to fetch packages
-	   required for building SPEC
+ -r REPO   additional RPM repository that is needed to fetch packages
+	   required for building SPEC. Can be specified multiple times
 
  -v VENDOR set vendor for RPM
 
- -p        skip generation of source package and use the one in sources/rpm
+ -p        skip generation of source package and use the one in /source/rpm
 "
 
 
