@@ -53,13 +53,13 @@ RELEASE=$2
 
 case "$SFOS_ARCH" in
     "i486")
-	DOCKER_PLATFORM_ARCH=i386
+	DOCKER_PLATFORM_ARCH=amd64
 	;;
     "aarch64")
-	DOCKER_PLATFORM_ARCH=arm64v8
+	DOCKER_PLATFORM_ARCH=arm64
 	;;
     "armv7hl")
-	DOCKER_PLATFORM_ARCH=arm32v7
+	DOCKER_PLATFORM_ARCH=arm
 	;;
     *)
 	echo "Unknown architecture specified:" "$SFOS_ARCH"
@@ -73,5 +73,5 @@ echo "Docker arch: $DOCKER_PLATFORM_ARCH"
 
 $ENGINE build \
     --build-arg SFOS_ARCH=$SFOS_ARCH --build-arg RELEASE=$RELEASE \
-    -t sailfishos-${SFOS_ARCH}-${RELEASE} \
+    --platform=linux/$DOCKER_PLATFORM_ARCH -t sailfishos-${SFOS_ARCH}-${RELEASE} \
     .

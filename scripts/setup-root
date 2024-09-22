@@ -27,17 +27,10 @@ esac
 
 INSTALL_ROOT=/sfos
 
-# packages that have to be installed later:
-# - git (otherwise %posttrans script 'filesystem' will fail on armv7hl
-
+# minimal set of packages for SFOS root
 PACKAGES="
-atruncate
-attr
 basesystem
-gcc-c++
 gnu-bash
-gnu-coreutils
-gnu-cpio
 gnu-diffutils
 gnu-findutils
 gnu-grep
@@ -45,33 +38,13 @@ gnu-gzip
 gnu-sed
 gnu-tar
 gnu-which
-deltarpm
-file
-jolla-ca
-kbd
-make
-meego-rpm-config
-net-tools
-passwd
-pigz
-procps-ng
-psmisc-tools
-python3-pip
-rootfiles
-rpm-build
-rpmlint
-sailfish-ca
-shadow-utils
-util-linux
-xdg-utils
-zypper
 "
 
 # switch arch to the desired one
 echo "arch = $SFOS_ARCH" >> /etc/zypp/zypp.conf
 
-# init rpm database
-rpm --root $INSTALL_ROOT --initdb
+# for some reason this is setup as a link otherwise
+mkdir -p $INSTALL_ROOT/var/lib/rpm
 
 # define repositories
 zypper --root $INSTALL_ROOT ar \
@@ -80,16 +53,21 @@ zypper --root $INSTALL_ROOT ar https://releases.jolla.com/jolla-apps/$RELEASE/$S
 zypper --root $INSTALL_ROOT ar https://releases.jolla.com/releases/$RELEASE/hotfixes/$SFOS_ARCH/ hotfixes
 zypper --root $INSTALL_ROOT ar https://releases.jolla.com/releases/$RELEASE/jolla/$SFOS_ARCH/ jolla
 
-# install packages
+# install packages - make sure that preferred gnu utils will be added first
 zypper --gpg-auto-import-keys --non-interactive \
        --root $INSTALL_ROOT in $PACKAGES
 
+# install rpm and zypper
+zypper --non-interactive \
+       --root $INSTALL_ROOT in rpm || echo "Ignoring error with RPM lock"
+
+zypper --non-interactive \
+       --root $INSTALL_ROOT in zypper
+
+# setting up variables
 echo -n "$SFOS_ARCH-meego-linux" > $INSTALL_ROOT/etc/rpm/platform
-echo "arch = $SFOS_ARCH" >> $INSTALL_ROOT/etc/zypp/zypp.conf
+#echo "arch = $SFOS_ARCH" >> $INSTALL_ROOT/etc/zypp/zypp.conf
 echo "BUILD: SailfishOS Builder" >> $INSTALL_ROOT/etc/meego-release
 
 # rpmtarget used by buildrpm
 echo $RPMTARGET > $INSTALL_ROOT/etc/rpmtarget
-
-# drop lastlog - Docker will just waste storage on it
-rm -f $INSTALL_ROOT/var/log/lastlog

@@ -1,4 +1,5 @@
-FROM coderus/sailfishos-baseimage AS build
+# build container
+FROM opensuse/leap:15.5 AS build
 
 ARG SFOS_ARCH=i486
 ARG RELEASE=4.6.0.13
@@ -7,10 +8,10 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY ./scripts/setup-root /app
-RUN chmod +x setup-root
 
 RUN /app/setup-root $SFOS_ARCH $RELEASE
 
+# run container
 FROM scratch
 
 COPY --from=build /sfos /
@@ -21,28 +22,60 @@ COPY \
     rpmdevtools/rpmdev-setuptree \
     /usr/bin
 
-# rpm database rebuild: somehow doesn't work cleanly
+# drop rpm databases
 RUN rm -f /var/lib/rpm/__db*
-RUN \
-    rpm --rebuilddb || \
-    echo "For some reason it fails, ignore. It does rebuild anyway." \
+RUN rpm --rebuilddb || \
     rm -rf /var/lib/rpmrebuilddb.* || \
-    echo "Makes sense to remove if it failed above"
+    echo "Usually the rebuild fails, ignore it"
 
-# install packages that have to be installed after base system is
-# settled
-RUN \
-    zypper --non-interactive in \
-    git
+# install the base system again to register it with rpm
+RUN zypper --gpg-auto-import-keys --non-interactive in \
+    atruncate \
+    attr \
+    basesystem \
+    busybox-symlinks-coreutils \
+    gnu-bash \
+    gnu-diffutils \
+    gnu-findutils \
+    gnu-grep \
+    gnu-gzip \
+    gnu-sed \
+    gnu-tar \
+    gnu-which \
+    deltarpm \
+    file \
+    jolla-ca \
+    kbd \
+    meego-rpm-config \
+    net-tools \
+    passwd \
+    pigz \
+    procps-ng \
+    psmisc-tools \
+    rootfiles \
+    sailfish-ca \
+    shadow-utils \
+    util-linux \
+    xdg-utils \
+    zypper
 
-# skipping install of SSU - handle repositories via zypper
-#
-# # setup ssu - cannot be installed in setup-root due to gpg errors
-# RUN zypper --non-interactive in ssu ssu-vendor-data-jolla
-# RUN ssu re @RELEASE@
+# install developer packages: required
+RUN zypper --non-interactive in \
+    git \
+    python3-pip \
+    rpmlint \
+    rpm-build
+
+# install developer packages: extras
+RUN zypper --non-interactive in \
+    gcc-c++ \
+    make
 
 # clear zypper cache
 RUN rm -rf /home/.zypp-cache
+
+# drop lastlog - Docker will just waste storage on it
+RUN rm -f $INSTALL_ROOT/var/log/lastlog
 
 # install required dependencies
 RUN pip3 install progressbar requests
