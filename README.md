@@ -27,8 +27,9 @@ out. If your sources have compilation artifacts, those could interfere
 with the building. As full build process is performed, make sure that
 the patches used in `%prep` stage apply.
 
-Until published, builder images have to be generated locally
-([see below for instructions](#how-to-create-builder-images)). 
+Builder images can be generated locally
+([see below for instructions](#how-to-create-builder-images)) or pulled from 
+[ghcr.io](https://github.com/orgs/sailfishos-open/packages?repo_name=docker-sailfishos-builder). 
 
 With the builder image ready, go to the
 folder of your cloned repository root and run (for `sailfishos-i486-4.6.0.13` builder image)
@@ -36,7 +37,8 @@ build command similar to:
 
 ```
 podman run --rm -it -v `pwd`:/source \
-   docker-sailfishos-builder-i486:4.6.0.13 buildrpm \
+   ghcr.io/sailfishos-open/docker-sailfishos-builder-i486:4.6.0.13 \
+   buildrpm \
      -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.6.0.13_i486/
 ```
 
@@ -84,7 +86,7 @@ Example command :
 podman run --rm -it \
    -v `pwd`/../nodejs18:/source/rpm \
    -v `pwd`:/source/RPMS \
-   docker-sailfishos-builder-i486:4.6.0.13 \
+   ghcr.io/sailfishos-open/docker-sailfishos-builder-i486:4.6.0.13 \
    buildrpm -p -v chum \
        -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.6.0.13_i486/
 ```
