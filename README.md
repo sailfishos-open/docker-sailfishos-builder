@@ -31,13 +31,13 @@ Until published, builder images have to be generated locally
 ([see below for instructions](#how-to-create-builder-images)). 
 
 With the builder image ready, go to the
-folder of your cloned repository root and run (for `sailfishos-i486-4.5.0.19` builder image)
+folder of your cloned repository root and run (for `sailfishos-i486-4.6.0.13` builder image)
 build command similar to:
 
 ```
 podman run --rm -it -v `pwd`:/source \
-   docker-sailfishos-builder-i486:4.5.0.19 buildrpm \
-     -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.5.0.19_i486/
+   docker-sailfishos-builder-i486:4.6.0.13 buildrpm \
+     -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.6.0.13_i486/
 ```
 
 In this example, Podman container gets access to the sources by its
@@ -84,9 +84,9 @@ Example command :
 podman run --rm -it \
    -v `pwd`/../nodejs18:/source/rpm \
    -v `pwd`:/source/RPMS \
-   docker-sailfishos-builder-i486:4.5.0.19 \
+   docker-sailfishos-builder-i486:4.6.0.13 \
    buildrpm -p -v chum \
-       -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.5.0.19_i486/
+       -r https://repo.sailfishos.org/obs/sailfishos:/chum:/testing/4.6.0.13_i486/
 ```
 
 In this example, Node.js RPMs are built and saved into the current
@@ -165,10 +165,10 @@ aarch64, armv7hl) and SFOS version. It is also possible to specify
 whether to use podman (default) or docker for containers. Example:
 
 ```
-./makeimage i486 4.5.0.19
+./makeimage i486 4.6.0.13
 ```
 
-This will create locally Podman container image `docker-sailfishos-builder-i486:4.5.0.19`. This
+This will create locally Podman container image `docker-sailfishos-builder-i486:4.6.0.13`. This
 image can be used for building your packages.
 
 

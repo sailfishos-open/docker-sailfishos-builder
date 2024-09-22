@@ -66,10 +66,10 @@ RUN zypper --non-interactive in \
     rpmlint \
     rpm-build
 
-# install developer packages: extras
-RUN zypper --non-interactive in \
-    gcc-c++ \
-    make
+## install developer packages: extras
+#RUN zypper --non-interactive in \
+#    gcc-c++ \
+#    make
 
 # clear zypper cache
 RUN rm -rf /home/.zypp-cache
