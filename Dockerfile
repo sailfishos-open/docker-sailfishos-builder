@@ -61,15 +61,16 @@ RUN zypper --gpg-auto-import-keys --non-interactive in \
 
 # install developer packages: required
 RUN zypper --non-interactive in \
+    createrepo_c \
     git \
+    make \
     python3-pip \
     rpmlint \
     rpm-build
 
 ## install developer packages: extras
-#RUN zypper --non-interactive in \
-#    gcc-c++ \
-#    make
+RUN zypper --non-interactive in \
+    gcc-c++
 
 # clear zypper cache
 RUN rm -rf /home/.zypp-cache
