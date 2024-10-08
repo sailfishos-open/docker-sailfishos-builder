@@ -82,6 +82,9 @@ RUN rm -f $INSTALL_ROOT/var/log/lastlog
 RUN pip3 install progressbar requests
 RUN rm -rf /root/.cache
 
+# set locale
+RUN echo LANG="en_US.utf8" > /etc/locale.conf
+
 # create source location
 RUN mkdir /source
 
