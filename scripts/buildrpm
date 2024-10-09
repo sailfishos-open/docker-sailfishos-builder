@@ -23,6 +23,7 @@ where:
 
 # Builds RPMs from sources found in /source
 SRCDIR=source
+RPMOUTPUTDIR=$SRCDIR/RPMS
 BDIR=/builder
 RPMTARGET=`cat /etc/rpmtarget`
 
@@ -80,6 +81,10 @@ fi
 SPECBNAME=`basename $SPEC`
 echo Building $SPECBNAME
 
+# refresh repositories and update packages
+zypper --non-interactive ref
+zypper --non-interactive up
+
 # install dependencies
 rpm-install-build-deps $SPEC
 
@@ -88,7 +93,7 @@ chown -R builder $BDIR
 su builder rpmdev-setuptree
 
 # copy all other sources and SPEC from rpm subfolder
-cp $SRCDIR/rpm/* $RPMSRCDIR/
+cp -a $SRCDIR/rpm/* $RPMSRCDIR/
 cp $SPEC $RPMSPECDIR
 
 # set SPEC to point to the one that will be used in the build
@@ -155,10 +160,10 @@ su builder -c \
 su builder -c "rpmlint $RPMDIR/"
 
 # copy RPMS to source RPMS subfolder
-mkdir -p $SRCDIR/RPMS
-cp $RPMDIR/*/* $SRCDIR/RPMS/
-chown -R `stat -c '%u:%g' $SRCDIR/.` $SRCDIR/RPMS
-chmod +r $SRCDIR/RPMS/*
+mkdir -p $RPMOUTPUTDIR
+cp $RPMDIR/*/* $RPMOUTPUTDIR/
+chown -R `stat -c '%u:%g' $SRCDIR/.` $RPMOUTPUTDIR
+chmod +r $RPMOUTPUTDIR/*
 
 echo "
 Ready
