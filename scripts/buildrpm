@@ -2,18 +2,20 @@
 
 set -ex
 
-usage="$(basename "$0") [-h] [-s SPEC] [-r REPO] [-v VENDOR]
+usage="$(basename "$0") [-h] [-s SPEC] [-r REPO] [-d GIT:TAG] [-v VENDOR]
 
 where:
  -h        show this help text
 
  -s SPEC   builds using given SPEC. Here, SPEC basename is only
-	   expected and should be allocated under rpm/ subfolder
+	   expected and should be located under rpm/ subfolder
 	   of the sources. By default, the first SPEC in rpm/
 	   subfolder is used
 
  -r REPO   additional RPM repository that is needed to fetch packages
 	   required for building SPEC. Can be specified multiple times
+
+ -d GIT:TAG download Git repository version described by Git commit ID or tag
 
  -v VENDOR set vendor for RPM
 
@@ -34,23 +36,31 @@ RPMSRCDIR=$BDIR/rpmbuild/SOURCES
 RPMSPECDIR=$BDIR/rpmbuild/SPECS
 RPMDIR=$BDIR/rpmbuild/RPMS
 
-specs=( $SRCDIR/rpm/*.spec )
-SPEC="${specs[0]}"
-
+SPEC=
 VENDOR=
+GIT_DOWNLOAD=
+REMOVE_SRCDIR=
 GENERATE_SOURCE_PACKAGE=1
 
 # handle options
-while getopts 's:r:v:ph' opt; do
+while getopts 's:r:d:v:ph' opt; do
   case "$opt" in
       s)
-	  SPEC=$SRCDIR/rpm/$OPTARG
+	  SPEC=$OPTARG
 	  ;;
 
       r)
 	  arg="$OPTARG"
 	  echo "Adding repository $arg"
 	  zypper ar --gpgcheck-allow-unsigned $arg repo-$OPTIND
+	  echo
+	  ;;
+
+      d)
+	  GIT_DOWNLOAD="$OPTARG"
+	  echo "Will download $GIT_DOWNLOAD"
+      SRCDIR=source-downloaded
+      mkdir $SRCDIR
 	  echo
 	  ;;
 
@@ -69,6 +79,20 @@ while getopts 's:r:v:ph' opt; do
   esac
 done
 shift "$(($OPTIND -1))"
+
+# download sources if needed
+if [[ -n "$GIT_DOWNLOAD" ]]; then
+    clone-git $SRCDIR "$GIT_DOWNLOAD"
+    REMOVE_SRCDIR=1
+fi
+
+# set spec
+if [[ -n "$SPEC" ]]; then
+    SPEC=$SRCDIR/rpm/$SPEC
+else
+    specs=( $SRCDIR/rpm/*.spec )
+    SPEC="${specs[0]}"
+fi
 
 # check if we have spec to build
 if [ ! -f $SPEC ]; then
@@ -100,7 +124,7 @@ cp $SPEC $RPMSPECDIR
 SPEC=$RPMSPECDIR/$SPECBNAME
 
 # set vendor if requested
-if [[ $VENDOR ]]; then
+if [[ -n "$VENDOR" ]]; then
     sed -i "1s/^/Vendor: $VENDOR\n/" $SPEC
 fi
 
@@ -111,7 +135,7 @@ sed -i "s/^Release:.*/Release: ${RELEASE}.${RELEASEOFFSET}/g" $SPEC
 echo "Set RPM release to ${RELEASE}.${RELEASEOFFSET}"
 
 # set version and generate source archive if needed
-if [[ $GENERATE_SOURCE_PACKAGE ]]; then
+if [[ -n "$GENERATE_SOURCE_PACKAGE" ]]; then
     # determine version and alter it if git repository
     pushd $SRCDIR
     if [ -d .git ]; then
@@ -131,7 +155,7 @@ if [[ $GENERATE_SOURCE_PACKAGE ]]; then
     echo Packing sources into $SOURCE
 
     SRCBASE=`rpmspec -q --srpm --qf "%{name}-%{version}\n" $SPEC`
-    TAROPTS="--exclude-vcs --exclude $SRCDIR/RPMS --exclude $SRCDIR/rpm --transform s/^source/$SRCBASE/"
+    TAROPTS="--exclude-vcs --exclude $SRCDIR/RPMS --exclude $SRCDIR/rpm --transform s/^$SRCDIR/$SRCBASE/"
 
     # pack main sources
     if [[ $SOURCE = *.tar.gz ]]; then
@@ -144,6 +168,13 @@ if [[ $GENERATE_SOURCE_PACKAGE ]]; then
 	echo "Unknown file extension for sources: $SOURCE"
 	exit 2
     fi
+fi
+
+# for donwloaded sources only
+# remove downloaded sources before build to save storage
+if [[ -n "$REMOVE_SRCDIR" ]]; then
+    echo Removing copy of downloaded sources before build
+    rm -rf $SRCDIR
 fi
 
 # set RPATH check to none as the use in SFOS leads to failure in check
@@ -162,7 +193,7 @@ su builder -c "rpmlint $RPMDIR/"
 # copy RPMS to source RPMS subfolder
 mkdir -p $RPMOUTPUTDIR
 cp $RPMDIR/*/* $RPMOUTPUTDIR/
-chown -R `stat -c '%u:%g' $SRCDIR/.` $RPMOUTPUTDIR
+chown -R `stat -c '%u:%g' source/.` $RPMOUTPUTDIR
 chmod +r $RPMOUTPUTDIR/*
 
 echo "

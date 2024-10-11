@@ -15,12 +15,6 @@ RUN /app/setup-root $SFOS_ARCH $RELEASE
 FROM scratch
 
 COPY --from=build /sfos /
-COPY \
-    scripts/buildrpm  \
-    scripts/rpm-install-build-deps \
-    rpmdevtools/rpmdev-spectool \
-    rpmdevtools/rpmdev-setuptree \
-    /usr/bin
 
 # drop rpm databases
 RUN rm -f /var/lib/rpm/__db*
@@ -81,6 +75,15 @@ RUN rm -f $INSTALL_ROOT/var/log/lastlog
 # install required dependencies
 RUN pip3 install progressbar requests
 RUN rm -rf /root/.cache
+
+# copy scripts
+COPY \
+    scripts/buildrpm  \
+    scripts/clone-git  \
+    scripts/rpm-install-build-deps \
+    rpmdevtools/rpmdev-spectool \
+    rpmdevtools/rpmdev-setuptree \
+    /usr/bin
 
 # set locale
 RUN echo LANG="en_US.utf8" > /etc/locale.conf
