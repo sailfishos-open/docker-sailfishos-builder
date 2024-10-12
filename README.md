@@ -8,7 +8,7 @@ hardware emulation. When using QEMU emulation, expect slow
 compilation speeds when compared to SB2.
 
 This environment can be used either on PC/server or in a cloud using container
-instances. If needed, in addition to work with the local files, it allows you 
+instances. If needed, in addition to work with the local files, it allows you
 to pull the sources from git repository before the build and push artifacts to S3
 bucket.
 
@@ -20,12 +20,11 @@ compile using the official SDK.
 On PC/servers, it is recommended to use the environment with `podman`. While docker may work
 as well, it is not tested with it.
 
-
 ## How to use it
 
 Builder images can be generated locally
-([see below for instructions](#how-to-create-builder-images)) or pulled from 
-[ghcr.io](https://github.com/orgs/sailfishos-open/packages?repo_name=docker-sailfishos-builder). 
+([see below for instructions](#how-to-create-builder-images)) or pulled from
+[ghcr.io](https://github.com/orgs/sailfishos-open/packages?repo_name=docker-sailfishos-builder).
 
 To use, go to the folder of your cloned repository root and run (for `sailfishos-i486-4.6.0.13`)
 build command similar to:
@@ -44,6 +43,7 @@ container. Container executes `buildrpm` script inside it (see
 `/source/rpm`.
 
 There are few options that can be given to `buildrpm` script:
+
 ```
  -b NAME   build name that is used to generate build information
            file. If absent, SPEC filename is used to derive it.
@@ -70,7 +70,6 @@ Note that it is recommended to use `--rm` to remove container as soon
 as it is finished. On every build, a clean environment is used and all
 the dependencies are pulled in again.
 
-
 ### Using with sources in archive
 
 In addition to the mode, where the build is performed using checked
@@ -88,6 +87,7 @@ container. It is expected that `/source/rpm` and `/source/RPMS` point
 to different folders on host.
 
 Example command :
+
 ```
 podman run --rm -it \
    -v `pwd`/../nodejs18:/source/rpm \
@@ -108,6 +108,7 @@ Instead of working with local sources, it is possible to request the
 build environment to pull sources using Git and build them. For that,
 specify Git repository and its tag using `url:tag` format and provide it
 by giving `-d` option to the buildrpm script in the container. Example:
+
 ```
 podman run --rm -v `pwd`:/source \
   ghcr.io/sailfishos-open/docker-sailfishos-builder-aarch64:4.6.0.13 \
@@ -128,11 +129,14 @@ specify and forward two environment variables:
 
 It is advisable to use `-q` option of s3cmd to avoid logging your access
 codes. When using on PC, you can set environment variables in a file as shown below
+
 ```
 S3_BUCKET=build-store
 S3_OPTIONS=-q --access_key=MYKEY --secret_key=SECRET --host=super.server.org --host-bucket=%(bucket)s.super.server.org
 ```
+
 and then import these variables as in
+
 ```
 podman run --rm \
    --env-file .s3env \
@@ -180,7 +184,6 @@ with `bash` and execute `buildrpm` already while inside the
 container. It is possible to apply the steps done by `buildrpm`
 manually as well when inside the container.
 
-
 ## Limitations
 
 The scripts are not handling many cases in a flexible manner provided
@@ -199,7 +202,6 @@ interfere. For example, armv7hl could be hit with [issue
 See issue for problem description. It is recommended then to check
 whether QEMU distributed by Jolla works better.
 
-
 ## How to create builder images
 
 Builder container images are very easy to create using `makeimage`
@@ -217,20 +219,23 @@ whether to use podman (default) or docker for containers. Example:
 This will create locally Podman container image `docker-sailfishos-builder-i486:4.6.0.13`. This
 image can be used for building your packages.
 
-
 ## QEMU setup
 
 You need to setup binfmt for qemu for the architectures you want to use. Follow the instructions for your system
 
 ### Arch-based
+
 Install package `qemu-user-binfmt`.
 
 ### Debian-based
+
 Install package `qemu-user-static`.
 
 ### Other
 
-To enable QEMU in systemd based Linux, add `qemu-custom.conf` in
+(This part is not meant for Debian-based systems and must be skipped to avoid breaking `systemd-binfmt`)
+
+To enable QEMU in most systemd based Linux, add `qemu-custom.conf` in
 `/etc/binfmt.d`. Example:
 
 ```
@@ -239,11 +244,13 @@ To enable QEMU in systemd based Linux, add `qemu-custom.conf` in
 ```
 
 After that, restart systemd service:
+
 ```
 systemctl restart systemd-binfmt
 ```
 
 You should see formats registered in `/proc`:
+
 ```
 # cat /proc/sys/fs/binfmt_misc/qemu-aarch64
 enabled
@@ -255,7 +262,6 @@ mask ffffffffffffff00fffffffffffffffffeffffff
 ```
 
 See References below for how to test QEMU support using Docker images.
-
 
 ## References
 
