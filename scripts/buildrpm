@@ -7,6 +7,9 @@ usage="$(basename "$0") [-h] [-s SPEC] [-r REPO] [-d GIT:TAG] [-v VENDOR]
 where:
  -h        show this help text
 
+ -b NAME   build name that is used to generate build information
+           file. If absent, SPEC filename is used to derive it.
+
  -s SPEC   builds using given SPEC. Here, SPEC basename is only
 	   expected and should be located under rpm/ subfolder
 	   of the sources. By default, the first SPEC in rpm/
@@ -36,6 +39,7 @@ RPMSRCDIR=$BDIR/rpmbuild/SOURCES
 RPMSPECDIR=$BDIR/rpmbuild/SPECS
 RPMDIR=$BDIR/rpmbuild/RPMS
 
+BUILD_NAME=
 SPEC=
 VENDOR=
 GIT_DOWNLOAD=
@@ -43,8 +47,12 @@ REMOVE_SRCDIR=
 GENERATE_SOURCE_PACKAGE=1
 
 # handle options
-while getopts 's:r:d:v:ph' opt; do
+while getopts 'b:s:r:d:v:ph' opt; do
   case "$opt" in
+      b)
+	  BUILD_NAME=$OPTARG
+	  ;;
+
       s)
 	  SPEC=$OPTARG
 	  ;;
@@ -103,6 +111,11 @@ fi
 
 SPECBNAME=`basename $SPEC`
 echo Building $SPECBNAME
+
+# set buildname is absent
+if [[ -z "$BUILD_NAME" ]]; then
+    BUILD_NAME=`basename -s .spec $SPEC`
+fi
 
 # refresh repositories and update packages
 zypper --non-interactive ref
@@ -194,6 +207,20 @@ mkdir -p $RPMOUTPUTDIR
 cp $RPMDIR/*/* $RPMOUTPUTDIR/
 chown -R `stat -c '%u:%g' source/.` $RPMOUTPUTDIR
 chmod +r $RPMOUTPUTDIR/*
+
+# generate md5sum for produced RPMs and sources
+if [[ -n "$GENERATE_SOURCE_PACKAGE" ]]; then
+    # remove generated source file as it will be lost later anyway
+    # and md5sum depends on time of packaging
+    rm $RPMSRCDIR/$SOURCE
+fi
+
+MD5FILE=$BUILD_NAME.md5sum
+(cd $RPMOUTPUTDIR && md5sum * > /$MD5FILE)
+(cd $RPMSRCDIR && md5sum * >> /$MD5FILE)
+sort -k 2,2 $MD5FILE > $RPMOUTPUTDIR/$MD5FILE
+
+echo "MD5SUM information file generated: $MD5FILE"
 
 # drop tracing to avoid logging of access codes
 set +x
