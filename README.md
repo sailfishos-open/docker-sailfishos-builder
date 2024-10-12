@@ -4,35 +4,30 @@ This is an alternative build environment for Sailfish OS. In contrast
 to the official SDKs, it doesn't use
 [Scratchbox2](https://github.com/sailfishos/scratchbox2)
 (SB2). Instead, it relies on running either native or through QEMU
-hardware emulation. When using QEMU emulation, expect very slow
+hardware emulation. When using QEMU emulation, expect slow
 compilation speeds when compared to SB2.
+
+This environment can be used either on PC/server or in a cloud using container
+instances. If needed, in addition to work with the local files, it allows you 
+to pull the sources from git repository before the build and push artifacts to S3
+bucket.
 
 This build environment was created to address official SDK limitations
 encountered while packaging Qt 5.15 for Sailfish OS. You may want to
 use it if you have a project that is difficult or impossible to
 compile using the official SDK.
 
-It is recommended to use the environment with `podman`. While docker may work
+On PC/servers, it is recommended to use the environment with `podman`. While docker may work
 as well, it is not tested with it.
 
 
 ## How to use it
 
-Preparations: 
- 1. Clone this repositiory or clean it if you already cloned it with `git clean -dfx`
- 1. initialize submodule with `git submodule update --init`
-
-To use this build environment, you have to have clean sources checked
-out. If your sources have compilation artifacts, those could interfere
-with the building. As full build process is performed, make sure that
-the patches used in `%prep` stage apply.
-
 Builder images can be generated locally
 ([see below for instructions](#how-to-create-builder-images)) or pulled from 
 [ghcr.io](https://github.com/orgs/sailfishos-open/packages?repo_name=docker-sailfishos-builder). 
 
-With the builder image ready, go to the
-folder of your cloned repository root and run (for `sailfishos-i486-4.6.0.13`)
+To use, go to the folder of your cloned repository root and run (for `sailfishos-i486-4.6.0.13`)
 build command similar to:
 
 ```
@@ -49,13 +44,24 @@ container. Container executes `buildrpm` script inside it (see
 `/source/rpm`.
 
 There are few options that can be given to `buildrpm` script:
+```
+ -b NAME   build name that is used to generate build information
+           file. If absent, SPEC filename is used to derive it.
 
-- `-r REMOTE` specify additional repositories for pulling dependencies
-  (can be given multiple times);
-- `-s SPEC` specify SPEC if there are more than one in `rpm` subfolder
-  of the sources. Use just a file basename, as in "test.spec";
-- `-v VENDOR` set vendor for RPM.
-- `-p` skip generation of source package and use the one in `rpm` subfolder.
+ -s SPEC   builds using given SPEC. Here, SPEC basename is only
+	   expected and should be located under rpm/ subfolder
+	   of the sources. By default, the first SPEC in rpm/
+	   subfolder is used
+
+ -r REPO   additional RPM repository that is needed to fetch packages
+	   required for building SPEC. Can be specified multiple times
+
+ -d GIT:TAG download Git repository version described by Git commit ID or tag
+
+ -v VENDOR set vendor for RPM
+
+ -p        skip generation of source package and use the one in /source/rpm
+```
 
 If all goes well, RPMs will be created under subfolder `RPMS` of the
 sources.
@@ -96,6 +102,44 @@ folder (`pwd`). Corresponding sources are in a folder
 `../nodejs18`. It is also setting vendor to `chum` and is using one of
 Chum repositories.
 
+### Using with sources that are pulled from Git repository
+
+Instead of working with local sources, it is possible to request the
+build environment to pull sources using Git and build them. For that,
+specify Git repository and its tag using `url:tag` format and provide it
+by giving `-d` option to the buildrpm script in the container. Example:
+```
+podman run --rm -v `pwd`:/source \
+  ghcr.io/sailfishos-open/docker-sailfishos-builder-aarch64:4.6.0.13 \
+  buildrpm \
+    -b tinybuild \
+    -d https://github.com/sailfishos-chum/tinyxml2.git:68b139533c605e4ef9761b1f06c99d80215a1afd
+```
+
+### Uploading build artifacts to S3
+
+You can instruct the builder to upload your RPMs into S3 bucket. Internally,
+[s3cmd](https://s3tools.org/usage) is used for it. To activate this mode,
+specify and forward two environment variables:
+
+- `S3_BUCKET` name of the bucket in S3
+- `S3_OPTIONS` command line options passed to s3cmd that should define your
+  access to S3. Read s3cmd [manual page](https://s3tools.org/usage) for options
+
+It is advisable to use `-q` option of s3cmd to avoid logging your access
+codes. When using on PC, you can set environment variables in a file as shown below
+```
+S3_BUCKET=build-store
+S3_OPTIONS=-q --access_key=MYKEY --secret_key=SECRET --host=super.server.org --host-bucket=%(bucket)s.super.server.org
+```
+and then import these variables as in
+```
+podman run --rm \
+   --env-file .s3env \
+   ghcr.io/sailfishos-open/docker-sailfishos-builder-aarch64:4.6.0.13 \
+   buildrpm -b tinybuild \
+   -d https://github.com/sailfishos-chum/tinyxml2.git:68b139533c605e4ef9761b1f06c99d80215a1afd
+```
 
 ## How it works
 
