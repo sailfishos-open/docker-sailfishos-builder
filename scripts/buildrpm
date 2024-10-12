@@ -58,10 +58,6 @@ while getopts 's:r:d:v:ph' opt; do
 
       d)
 	  GIT_DOWNLOAD="$OPTARG"
-	  echo "Will download $GIT_DOWNLOAD"
-      SRCDIR=source-downloaded
-      mkdir $SRCDIR
-	  echo
 	  ;;
 
       v)
@@ -82,6 +78,9 @@ shift "$(($OPTIND -1))"
 
 # download sources if needed
 if [[ -n "$GIT_DOWNLOAD" ]]; then
+    echo "Will download $GIT_DOWNLOAD"
+    SRCDIR=source-downloaded
+    mkdir $SRCDIR
     clone-git $SRCDIR "$GIT_DOWNLOAD"
     REMOVE_SRCDIR=1
 fi
@@ -195,6 +194,17 @@ mkdir -p $RPMOUTPUTDIR
 cp $RPMDIR/*/* $RPMOUTPUTDIR/
 chown -R `stat -c '%u:%g' source/.` $RPMOUTPUTDIR
 chmod +r $RPMOUTPUTDIR/*
+
+# drop tracing to avoid logging of access codes
+set +x
+
+# upload to S3 if requested
+if [ -n "$S3_OPTIONS" ] && [ -n "$S3_BUCKET" ]; then
+    echo "Uploading files into specified S3 bucket"
+    for file in "$RPMOUTPUTDIR"/*; do
+        s3cmd $S3_OPTIONS put "$file" s3://"$S3_BUCKET"
+    done
+fi
 
 echo "
 Ready

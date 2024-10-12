@@ -73,7 +73,12 @@ RUN rm -rf /home/.zypp-cache
 RUN rm -f $INSTALL_ROOT/var/log/lastlog
 
 # install required dependencies
+# for rpmdev-spectool
 RUN pip3 install progressbar requests
+# s3 uploads
+RUN pip3 install s3cmd
+
+# cleanup
 RUN rm -rf /root/.cache
 
 # copy scripts
