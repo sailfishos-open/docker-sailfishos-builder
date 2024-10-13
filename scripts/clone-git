@@ -27,14 +27,8 @@ mkdir -p "$TARGET_FOLDER"
 cd "$TARGET_FOLDER" || exit 1
 
 # Initialize the repository
-git init
-git remote add origin "$REPO_URL"
-
-# Fetch only the specified commit
-git fetch --depth 1 origin "$COMMIT_ID"
-
-# Checkout the fetched commit
-git checkout FETCH_HEAD
+git clone "$REPO_URL" ./
+git checkout "$COMMIT_ID"
 
 # Initialize submodules shallowly
 git submodule update --init --recursive --depth 1
