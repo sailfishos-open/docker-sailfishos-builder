@@ -23,7 +23,7 @@ RUN rpm --rebuilddb || \
     echo "Usually the rebuild fails, ignore it"
 
 # install the base system again to register it with rpm
-RUN zypper --gpg-auto-import-keys --non-interactive in \
+RUN zypper --gpg-auto-import-keys --non-interactive in --force-resolution \
     atruncate \
     attr \
     basesystem \

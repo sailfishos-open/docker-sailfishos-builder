@@ -31,13 +31,6 @@ INSTALL_ROOT=/sfos
 PACKAGES="
 basesystem
 gnu-bash
-gnu-diffutils
-gnu-findutils
-gnu-grep
-gnu-gzip
-gnu-sed
-gnu-tar
-gnu-which
 "
 
 # switch arch to the desired one
